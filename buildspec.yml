@@ -1,31 +1,23 @@
-version: 0.2 
- 
-phases: 
-  install: 
-    commands: 
-      # Install dependencies needed for running tests 
-      - npm install 
- 
-      # Upgrade AWS CLI to the latest version 
-      - pip install --upgrade awscli 
-  pre_build: 
-    commands: 
+version: 0.2
 
-  build: 
-    commands: 
-      # Use AWS SAM to package the application by using AWS CloudFormation 
-      - aws s3 cp --recursive public/ s3://$WEBSITE_S3_BUCKET/public/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers 
-      - sed -i -e "s|assets/|$WEBSITE_S3_PREFIX/public/assets/|g" public/index.html 
-      - aws cloudformation package --template template.yml --s3-bucket $S3_BUCKET --output-template template-export.yml 
-  post_build: 
-    commands: 
- 
-      # Do not remove this statement. This command is required for AWS CodeStar projects. 
-      # Update the AWS Partition, AWS Region, account ID and project ID in the project ARN on template-configuration.json file so AWS CloudFormation can tag project resources. 
-      - sed -i.bak 's/\$PARTITION\$/'${PARTITION}'/g;s/\$AWS_REGION\$/'${AWS_REGION}'/g;s/\$ACCOUNT_ID\$/'${ACCOUNT_ID}'/g;s/\$PROJECT_ID\$/'${PROJECT_ID}'/g' template-configuration.json 
- 
-artifacts: 
-  type: zip 
-  files: 
-    - template-export.yml 
-    - template-configuration.js
+phases:
+  pre_build:
+    commands:
+      - echo Installing source NPM dependencies...
+      - npm install
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Compiling the Node.js code
+      - npm build
+  post_build:
+    commands:
+      - echo Build completed on `date`
+# Include only the files required for your application to run.
+# Do not use recursively include artifacts from node_modules directory as it will include unnecessary packages 
+# used only for building and testing.
+# ExpressJS apps will need other artifact directories included (bin/*, public/*, routes/*, views/* etc).
+artifacts:
+  files:
+    - app.js
+    - package.json
